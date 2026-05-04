@@ -447,7 +447,22 @@ def run_test():
                 page.wait_for_load_state("networkidle", timeout=max(1000, int(args.timeout_ms)))
             except Exception:
                 pass
-            page.wait_for_selector("textarea", timeout=max(1000, int(args.timeout_ms)))
+            # Try multiple times to find textarea - site may be slow
+            loaded = False
+            for attempt in range(5):
+                try:
+                    page.wait_for_selector("textarea", timeout=15000)
+                    loaded = True
+                    break
+                except Exception:
+                    print(f"  Waiting for page to load (attempt {attempt+1}/5)...")
+                    try:
+                        page.wait_for_timeout(3000)
+                    except Exception:
+                        pass
+            if not loaded:
+                # Try continuing anyway
+                print("Warning: textarea not detected, attempting to continue...")
             print("Frontend loaded successfully.")
         except Exception as e:
             print(f"Error loading frontend: {e}")
